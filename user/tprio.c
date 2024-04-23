@@ -1,6 +1,10 @@
 #include "types.h"
 #include "user.h"
 
+#define LOWEST_PRIO 9
+#define NORM_PRIO 5
+#define HIGHEST_PRIO 0
+
 void
 do_calc (char* nombre)
 {

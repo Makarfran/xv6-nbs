@@ -24,7 +24,7 @@ UPROGS=\
 	exitwait\
 	phmem1\
 	phmem2\
-	#tprio\
+	tprio\
 
 # Try to infer the correct TOOLPREFIX if not set
 ifndef TOOLPREFIX

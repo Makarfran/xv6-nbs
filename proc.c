@@ -94,6 +94,35 @@ getProcbyPID(int pid){
   return p;
 }
 
+int
+setNewPrio(struct proc* p, unsigned int prio){
+	
+	struct priotable* prt = &ptable.priotable[p->prio];
+	acquire(&ptable.lock);
+	if(prt->primero == p){
+		quitarProc(p, p->prio);
+		insertProc(p, prio);
+	}
+	struct proc* anterior = prt->primero->sigprio;
+	struct proc* actual = prt->primero;
+
+	while(actual != p){
+		anterior = actual;
+		actual = actual->sigprio;
+	}
+	
+	anterior->sigprio = actual->sigprio;
+	if(anterior->sigprio == NULL){
+		prt->ultimo = anterior->sigprio;
+	}
+	actual->sigprio = NULL;
+	actual->prio = prio;
+	insertProc(p, actual->prio);
+	
+	release(&ptable.lock);
+	return 0;
+}
+
 void
 pinit(void)
 {
@@ -419,10 +448,11 @@ scheduler(void)
   for(;;){
     // Enable interrupts on this processor.
     sti();
-
+    
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
     for(pi = ptable.priotable; pi < &ptable.priotable[10]; pi++){
+    	
     	
       if(!pi->primero)
         continue;
@@ -437,15 +467,20 @@ scheduler(void)
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
+      
+      
       quitarProc(p, p->prio);
+      
+      
       
 
       swtch(&(c->scheduler), p->context);
       switchkvm();
-
+      
       // Process is done running for now.
       // It should have changed its p->state before coming back.
       c->proc = 0;
+      break;
       
     }
     

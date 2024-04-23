@@ -122,6 +122,7 @@ int             wait(int*);
 void            wakeup(void*);
 void            yield(void);
 struct proc*    getProcbyPID(int);
+int		setNewPrio(struct proc*, unsigned int prio);
 
 // swtch.S
 void            swtch(struct context**, struct context*);
@@ -190,4 +191,9 @@ void            clearpteu(pde_t *pgdir, char *uva);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
+
+//Priority tags
+#define LOWEST_PRIO 9
+#define NORMAL_PRIO 5
+#define HIGHEST_PRIO 0
 

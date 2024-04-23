@@ -153,12 +153,40 @@ sys_phmem(void){
 
 int
 sys_getprio(void){
-  return 0;
+  int pid;
+  struct proc *p;
+  if(argint(0, &pid) < 0)
+    return -1;
+  if((p = getProcbyPID(pid)) == 0){
+  	cprintf("No existe un proceso con esa PID\n");
+  	return -1;
+  }
+  
+  return p->prio;
 }
 
 int
 sys_setprio(void){
+  int pid;
+  struct proc *p;
+  int trampas;
+  unsigned int a;
+  if(argint(0, &pid) < 0)
+    return -1;
+    
+  if(argint(1, &trampas) < 0)
+    return -1;
+  a = trampas;
+  if((p = getProcbyPID(pid)) == 0){
+  	cprintf("No existe un proceso con esa PID\n");
+  	return -1;
+  }
+  if(p->state == RUNNABLE){
+  	setNewPrio(p, a);
+  } else {
+  	p->prio = a;
+  }
   
-  return 0;
+  return p->prio;
 }
 
