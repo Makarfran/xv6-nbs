@@ -4,7 +4,7 @@
 #include "types.h"
 #include "stat.h"
 #include "user.h"
-
+/*
 #ifndef WIFEXITED
 #define WIFEXITED(v) 1
 #endif
@@ -20,7 +20,7 @@
 #ifndef WEXITTRAP
 #define WEXITTRAP(n) (n)
 #endif
-
+*/
 #define N  1000
 
 void

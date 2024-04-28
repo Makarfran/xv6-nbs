@@ -80,19 +80,22 @@ trap(struct trapframe *tf)
             cpuid(), tf->cs, tf->eip);
     lapiceoi();
     break;
-  case T_PGFLT:
-   uint va = PGROUNDDOWN(rcr2());
-    if(va >= myproc()->sz){
-      cprintf("usertrap(): va mayor que tamano\n");
-      myproc()->killed = 1;
-    }
-    if((tf->err & 0x7) == 0x7){
-    	cprintf("te has paso %d\n", tf->err);
-    	myproc()->killed = 1;
-    }
+  case T_PGFLT: //Cuestion Lazy allocation, ha habido fallo de pagina
+   uint va = PGROUNDDOWN(rcr2()); //addr donde esta el error
     
+    
+    if((tf->err & 0x7) == 0x7){ //esto puede pasar cuando se intenta acceder a espacio protegido o el kernbase
+    	cprintf("Page violation.Write type. Error code: %d\n", tf->err);
+    	myproc()->killed = 1;
+    	break;
+    }
+    if((va >= myproc()->sz) && ((tf->err & 0x6))){ //el error ocurre mas alla del tamaño que deberia tener el proceso y ademas que es escritura
+      cprintf("Tried to access beyond sz, Error code: %d\n", tf->err);
+      myproc()->killed = 1;
+      break;
+    }
 
-    if(va < myproc()->sz){
+    if(va < myproc()->sz){ //addr dentro de sz, hora de reservar pagina
       
       char *mem = kalloc();
       if (mem  == 0) { 
@@ -102,11 +105,13 @@ trap(struct trapframe *tf)
       }
       memset(mem, 0, PGSIZE); // set the page to 0
       
+      
       if(mappages(myproc()->pgdir, (char*) PGROUNDDOWN(rcr2()), PGSIZE, V2P(mem), PTE_W|PTE_U) != 0){
         cprintf("usertrap(): mappages falló\n");
         kfree(mem);
         myproc()->killed = 1;
       }
+      lcr3(V2P(myproc()->pgdir)); //invalida tlb, necesario para consistencia con liberar memoria
     } 
     
     break;
@@ -131,13 +136,16 @@ trap(struct trapframe *tf)
             myproc()->pid, myproc()->name, tf->trapno,
             tf->err, cpuid(), tf->eip, rcr2());
     myproc()->killed = 1;
+    
   }
-
+  
   // Force process exit if it has been killed and is in user space.
   // (If it is still executing in the kernel, let it keep running
   // until it gets to the regular system call return.)
-  if(myproc() && myproc()->killed && (tf->cs&3) == DPL_USER)
-    exit(tf->trapno + 0x80);
+  if(myproc() && myproc()->killed && (tf->cs&3) == DPL_USER){
+  	
+    exit(tf->trapno+1); //se le suma 1 para que se pillen como fallidos en exitwait.c
+    }
 
   // Force process to give up CPU on clock tick.
   // If interrupts were on while locks held, would need to check nlock.
@@ -147,6 +155,6 @@ trap(struct trapframe *tf)
 
   // Check if the process has been killed since we yielded
   if(myproc() && myproc()->killed && (tf->cs&3) == DPL_USER)
-    exit(tf->trapno + 0x80 );
+    exit(tf->trapno+1); //se le suma 1 para que se pillen como fallidos en exitwait.c
 }
 

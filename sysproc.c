@@ -19,9 +19,10 @@ int
 sys_exit(void)
 {
   int i;
-  if(argint(0, &i) < 0)
+  if(argint(0, &i) < 0) //coger el estado
    return -1;
-  myproc()->status = i;
+  i = (i << 8); //se mueve 8 bits pa que no lo pille como tener error pero hay que retener el estado y tal
+                //mas por el tema de que el test no pille los que usen exit como fallidos.
   exit(i);
   return 0;  // not reached
 }
@@ -30,8 +31,10 @@ int
 sys_wait(void)
 {
   int* i;
+  
   if(argptr(0, (void**)&i, sizeof(*i)) < 0)
     return -1;
+ 
   return wait(i);
 }
 
@@ -57,21 +60,21 @@ sys_sbrk(void)
   int addr;
   int n;
   
-  if(argint(0, &n) < 0)
+  if(argint(0, &n) < 0) //tamaño de cambio
     return -1;
   
-  addr = myproc()->sz;
+  addr = myproc()->sz; //address con tamaño actual
   
-  myproc()->sz = addr + n;
+  myproc()->sz = addr + n; //le sumamos el nuevo
   
   //if(growproc(n) < 0)
     // return -1;
   
-  //en casos de n negativa o neutra no parece que entre a trap.c osea que si quiero hacer deallocation tiene que ser aqui digo yo
-  //pero hacerlo aqui no seria lazy allocation pero no se donde mas ponerlo de todas formas
-  // que se podria argumentar que al contrario que en el caso de reservar memoria que quieres hacerlo cuando lo necesites, despejar memoria querrias hacerlo cuanto antes pero bueno.
+  //Si es negativo (ie. liberar espacio) tiene sentido liberarlo cuanto antes en vez de que sea lazy
+  //a parte de que puede que no entre en el trapframe en los tests para hacerlo de otra manera
   if(n < 0){
      deallocuvm(myproc()->pgdir, addr, myproc()->sz);
+     lcr3(V2P(myproc()->pgdir));
   }
   
  
@@ -128,25 +131,25 @@ int
 sys_phmem(void){
   int pid;
   struct proc *p;
-  if(argint(0, &pid) < 0)
+  if(argint(0, &pid) < 0) //conseguimos el pid
     return -1;
-  if((p = getProcbyPID(pid)) == 0){
+  if((p = getProcbyPID(pid)) == 0){ //conseguimos el proceso mediante su pid
   	cprintf("No existe un proceso con esa PID\n");
   	return -1;
   }
-  int count = 0;
+  int count = 0; //inicia cuenta a 0
   pte_t *pte;
   uint a = 0;
-  for(; a  <= p->sz ; a += PGSIZE){
-    pte = walkpgdir(p->pgdir, (char*)a, 0);
+  for(; a  <= p->sz ; a += PGSIZE){ //vamos a ir recorriendo la tabla de paginas que va a aumentar la cuenta solo
+    pte = walkpgdir(p->pgdir, (char*)a, 0); //en paginas con bit presente
     
     if((*pte & PTE_P) != 0){
       count++;
     }
   }
   
-  uint end = (count*PGSIZE)/1024;
-  cprintf("%d", end);
+  uint end = (count*PGSIZE)/1024; //nº pag presentes * tamaño de pagina es el tamaño en bytes lo dividimos entre 1024
+  cprintf("%d", end);//imprimo los kb? esto es una prueba o lo tenia que hacer, no me acuerdo
   
   return end;
 }

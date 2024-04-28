@@ -5,7 +5,7 @@ exitwait:     formato del fichero elf32-i386
 Desensamblado de la sección .text:
 
 00000000 <forktest>:
-
+*/
 #define N  1000
 
 void

@@ -51,7 +51,7 @@ struct proc {
   char name[16];               // Process name (debugging)
   int status;
   unsigned int prio;		//prioridad del proceso
-  struct proc *sigprio;		//siguiente proceso en la cola
+  struct proc *sigprio;		//siguiente proceso en la cola de prioridad
 };
 
 // Process memory is laid out contiguously, low addresses first:

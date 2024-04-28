@@ -74,17 +74,17 @@ sys_dup2(void)
   struct proc *curproc = myproc();
   int gd;
   //1. dup(oldfd, newfd)
-  // argfd(oldfd)
+  // argfd(oldfd) pillar el filedescriptor
   if(argfd(0, 0, &f) < 0)
     return -1;
-  // argint(newfd)
+  // argint(newfd) pillar el indice de fichero del nuevo
   if(argint(1, &gd) < 0)
     return -1;
-  if(gd < 0 || gd >= NOFILE)
+  if(gd < 0 || gd >= NOFILE) //ver si hay error con el que da
     return -1;
-  g=myproc()->ofile[gd];
+  g=myproc()->ofile[gd]; //tener el filedescriptor de g
   //
-  //2. oldf=newfd?
+  //2. oldf=newfd? ver que no son el mismo
   if(f == g)
     return gd;
   //3. newfd esta abierto -> lo cierras sysclose
@@ -94,7 +94,7 @@ sys_dup2(void)
   } 
   //4. duplicamos oldfd en newfd
   curproc->ofile[gd] = f;
-  //5. return newfd(man)
+  //5. return newfd(man) y hacemos el filedup
   filedup(f);
   return gd;
 }
@@ -105,7 +105,7 @@ sys_read(void)
   struct file *f;
   int n;
   char *p;
-
+  
   if(argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argptr(1, (void**)&p, n) < 0)
     return -1;
   return fileread(f, p, n);
@@ -117,7 +117,7 @@ sys_write(void)
   struct file *f;
   int n;
   char *p;
-
+  
   if(argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argptr(1, (void**)&p, n) < 0)
     return -1;
   return filewrite(f, p, n);

@@ -4,8 +4,8 @@
 int
 main(int argc, char *argv[])
 {
-  char* a = sbrk(15000);
-
+  
+  char* a = sbrk(15000);	
   a[500] = 1;
 
   
@@ -24,14 +24,14 @@ main(int argc, char *argv[])
     exit(2);
   } 
   
-
   if (a != sbrk(15000))
   {
     printf (1, "sbrk() negativo fallÃ³.\n");
     exit(3);
   }
-
-  printf (1, "Debe imprimir 1: %d.\n", ++a[500]); 
-
+  
+ 
+  printf (1, "Debe imprimir 1: %d.\n", ++a[500]);
+  
   exit(0);
 }

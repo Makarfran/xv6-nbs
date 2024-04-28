@@ -80,8 +80,8 @@ main(int argc, char *argv[])
   a1:	e8 ca 00 00 00       	call   170 <exit>
   a6:	83 c4 10             	add    $0x10,%esp
   }
-
-  printf (1, "Debe imprimir 1: %d.\n", ++a[500]);
+  
+  printf (1, "? Debe imprimir 1: %d.\n", ++a[500]);
   a9:	8a 83 f4 01 00 00    	mov    0x1f4(%ebx),%al
   af:	40                   	inc    %eax
   b0:	88 83 f4 01 00 00    	mov    %al,0x1f4(%ebx)
@@ -103,7 +103,7 @@ main(int argc, char *argv[])
 
   fork();
   e3:	e8 80 00 00 00       	call   168 <fork>
-
+ 
   a[600*4096*2] = 1;
   e8:	c6 83 00 00 4b 00 01 	movb   $0x1,0x4b0000(%ebx)
 
@@ -114,15 +114,15 @@ main(int argc, char *argv[])
   a=sbrk(1024*4096*2);
   fb:	c7 04 24 00 00 80 00 	movl   $0x800000,(%esp)
  102:	e8 f1 00 00 00       	call   1f8 <sbrk>
-
-  printf (1, "Debe imprimir 1: %d.\n", ++a[600*4096*2]);
+  
+  printf (1, "! Debe imprimir 1: %d.\n", ++a[600*4096*2]);
  107:	8a 88 00 00 4b 00    	mov    0x4b0000(%eax),%cl
  10d:	8d 51 01             	lea    0x1(%ecx),%edx
  110:	88 90 00 00 4b 00    	mov    %dl,0x4b0000(%eax)
  116:	83 c4 0c             	add    $0xc,%esp
  119:	0f be d2             	movsbl %dl,%edx
  11c:	52                   	push   %edx
- 11d:	68 8b 04 00 00       	push   $0x48b
+ 11d:	68 a3 04 00 00       	push   $0x4a3
  122:	6a 01                	push   $0x1
  124:	e8 a2 01 00 00       	call   2cb <printf>
  
@@ -374,7 +374,7 @@ printint(int fd, int xx, int base, int sgn)
  27f:	f7 f6                	div    %esi
  281:	89 df                	mov    %ebx,%edi
  283:	43                   	inc    %ebx
- 284:	8a 92 00 05 00 00    	mov    0x500(%edx),%dl
+ 284:	8a 92 1c 05 00 00    	mov    0x51c(%edx),%dl
  28a:	88 54 3d d8          	mov    %dl,-0x28(%ebp,%edi,1)
   }while((x /= base) != 0);
  28e:	89 ca                	mov    %ecx,%edx
@@ -480,7 +480,7 @@ printf(int fd, const char *fmt, ...)
  33a:	83 e8 63             	sub    $0x63,%eax
  33d:	83 f8 15             	cmp    $0x15,%eax
  340:	0f 87 bc 00 00 00    	ja     402 <printf+0x137>
- 346:	ff 24 85 a8 04 00 00 	jmp    *0x4a8(,%eax,4)
+ 346:	ff 24 85 c4 04 00 00 	jmp    *0x4c4(,%eax,4)
         printint(fd, *ap, 10, 1);
  34d:	8b 7d e4             	mov    -0x1c(%ebp),%edi
  350:	8b 17                	mov    (%edi),%edx
@@ -527,7 +527,7 @@ printf(int fd, const char *fmt, ...)
  3a9:	85 f6                	test   %esi,%esi
  3ab:	75 13                	jne    3c0 <printf+0xf5>
           s = "(null)";
- 3ad:	be a1 04 00 00       	mov    $0x4a1,%esi
+ 3ad:	be bb 04 00 00       	mov    $0x4bb,%esi
  3b2:	eb 0c                	jmp    3c0 <printf+0xf5>
           putc(fd, *s);
  3b4:	0f be d2             	movsbl %dl,%edx

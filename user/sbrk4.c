@@ -27,22 +27,22 @@ main(int argc, char *argv[])
     printf (1, "sbrk() negativo fallÃ³.\n");
     exit(3);
   }
-
-  printf (1, "Debe imprimir 1: %d.\n", ++a[500]);
+  
+  printf (1, "? Debe imprimir 1: %d.\n", ++a[500]);
 
   a=sbrk (-15000);
 
   a=sbrk(1024*4096*2);
 
   fork();
-
+ 
   a[600*4096*2] = 1;
 
   sbrk(-1024*4096*2);
 
   a=sbrk(1024*4096*2);
-
-  printf (1, "Debe imprimir 1: %d.\n", ++a[600*4096*2]);
+  
+  printf (1, "! Debe imprimir 1: %d.\n", ++a[600*4096*2]);
  
 
   exit(0);

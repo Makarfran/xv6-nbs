@@ -20,11 +20,11 @@ main(int argc, char *argv[])
    e:	53                   	push   %ebx
    f:	51                   	push   %ecx
   10:	83 ec 18             	sub    $0x18,%esp
-  char* a = sbrk(15000);
+  
+  char* a = sbrk(15000);	
   13:	68 98 3a 00 00       	push   $0x3a98
   18:	e8 76 01 00 00       	call   193 <sbrk>
   1d:	89 c3                	mov    %eax,%ebx
-
   a[500] = 1;
   1f:	c6 80 f4 01 00 00 01 	movb   $0x1,0x1f4(%eax)
 
@@ -62,7 +62,6 @@ main(int argc, char *argv[])
   6f:	83 c4 10             	add    $0x10,%esp
   } 
   
-
   if (a != sbrk(15000))
   72:	83 ec 0c             	sub    $0xc,%esp
   75:	68 98 3a 00 00       	push   $0x3a98
@@ -81,8 +80,9 @@ main(int argc, char *argv[])
   9c:	e8 6a 00 00 00       	call   10b <exit>
   a1:	83 c4 10             	add    $0x10,%esp
   }
-
-  printf (1, "Debe imprimir 1: %d.\n", ++a[500]); 
+  
+ 
+  printf (1, "Debe imprimir 1: %d.\n", ++a[500]);
   a4:	8a 83 f4 01 00 00    	mov    0x1f4(%ebx),%al
   aa:	40                   	inc    %eax
   ab:	88 83 f4 01 00 00    	mov    %al,0x1f4(%ebx)
@@ -92,7 +92,7 @@ main(int argc, char *argv[])
   b8:	68 27 04 00 00       	push   $0x427
   bd:	6a 01                	push   $0x1
   bf:	e8 a2 01 00 00       	call   266 <printf>
-
+  
   exit(0);
   c4:	c7 04 24 00 00 00 00 	movl   $0x0,(%esp)
   cb:	e8 3b 00 00 00       	call   10b <exit>

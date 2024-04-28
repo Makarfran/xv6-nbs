@@ -35,13 +35,13 @@ main(int argc, char *argv[])
   printf (1, "Este programa primero intenta acceder mas alla de sz.\n");
 
   // MÃ¡s allÃ¡ de sz
-  //test1();
+  test1(); //110
 
   // Guarda
-  test2();
+  test2(); //111
 
   // NÃºcleo
-  //test3();
+  test3(); //111
 
   exit (0);
 }

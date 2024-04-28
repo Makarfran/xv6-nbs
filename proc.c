@@ -7,15 +7,15 @@
 #include "proc.h"
 #include "spinlock.h"
 
-struct priotable{
-  struct proc *primero;
-  struct proc *ultimo;
+struct priotable{ //Una cola de prioridades
+  struct proc *primero; //pointer al primer miembro
+  struct proc *ultimo;  //pointer al ultimo miembro
 };
 
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
-  struct priotable priotable[10];
+  struct priotable priotable[10]; //le metemos al struct de ptable 10 colas de prioridad (se podrian usar menos)
 } ptable;
 
 
@@ -28,18 +28,18 @@ extern void trapret(void);
 
 static void wakeup1(void *chan);
 
-int
+int //metodo para insertar proceso al final de una cola de prioridad. aqui se entra con el lock de la tabla
 insertProc( struct proc *proc, unsigned int prio){
 	
 	
-	struct priotable* prt = &ptable.priotable[prio];
-	if(!prt->ultimo){
+	struct priotable* prt = &ptable.priotable[prio]; //se busca la direccion de la priotable indicada
+	if(!prt->ultimo){ //no hay ultimo, ergo esta vacia. instauro a este proceso de primero y ultimo
 	   prt->primero = proc;
 	   prt->ultimo = proc;
-	   proc->sigprio = NULL;
+	   proc->sigprio = NULL; //no apuntas a nadie
 	   
-	} else if(prt->ultimo){
-	   struct proc *tmp = prt->ultimo;
+	} else if(prt->ultimo){ //hay ultimo. cambio el puntero de la cola a que apunte a este
+	   struct proc *tmp = prt->ultimo; //y cojo al anterior ultimo para cambiar a su sigprio y que apunte al nuevo
 	   tmp->sigprio = proc;
 	   prt->ultimo = proc;
 	   proc->sigprio = NULL;
@@ -50,19 +50,19 @@ insertProc( struct proc *proc, unsigned int prio){
 	return 1;
 }
 
-int
+int //metodo para quitar al primer proceso. aqui se entra con el lock de la tabla
 quitarProc(struct proc* proc, unsigned int prio){
 	
-	struct priotable* prt = &ptable.priotable[prio];
-	if(prt->primero != proc){
+	struct priotable* prt = &ptable.priotable[prio]; //consigo la priotable
+	if(prt->primero != proc){ //el proceso que le paso no es el primero, devuelvo 0 en señal de error
 	   return 0;
-	} else if(prt->primero){
+	} else if(prt->primero){ //si lo es.
 	   
-	   struct proc* tmp2;
-	   tmp2 = proc->sigprio;
+	   struct proc* tmp2; 
+	   tmp2 = proc->sigprio; //cojo al siguiente para hacerlo el nuevo primero
 	   prt->primero = tmp2;
-	   proc->sigprio = NULL;
-	   if(prt->ultimo == proc){
+	   proc->sigprio = NULL; //desapunto el sigprio del proceso que se va
+	   if(prt->ultimo == proc){ //si el ultimo tambien es el que se va, quito tambien el puntero del ultimo
 	   	prt->ultimo = NULL;
 	   }
 	   
@@ -72,37 +72,42 @@ quitarProc(struct proc* proc, unsigned int prio){
 	return 1;
 }
 
-struct proc*
+struct proc* //para conseguir el proceso mediante su pid
 getProcbyPID(int pid){
   int found = 0;
   struct proc* p;
-  acquire(&ptable.lock);
-  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+  acquire(&ptable.lock); //adquiero el cerrojo
+  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) { //recorro la tabla de procesos
       
-      if (p->pid == pid) {
+      if (p->pid == pid) { //uno coincide con el pid que paso asi que paro
           /* found */
           found = 1;
           
           break;
        }
   }
-  if(found != 1){
+  if(found != 1){ //si no se encuentra devuelvo 0
   	return 0;
   }
 
-  release(&ptable.lock);
-  return p;
+  release(&ptable.lock); //libero el cerrojo
+  return p; //si se ha encontrado devuelvo el proceso
 }
 
-int
+int //este metodo es para cambiar la prioridad de un proceso que esta ya en una cola de prioridad
 setNewPrio(struct proc* p, unsigned int prio){
 	
-	struct priotable* prt = &ptable.priotable[p->prio];
-	acquire(&ptable.lock);
-	if(prt->primero == p){
+	struct priotable* prt = &ptable.priotable[p->prio]; //consigo su cola actual
+	acquire(&ptable.lock); //conseguimos el cerrojo
+	if(prt->primero == p){ //si es el primero de la cola, usamos simplemente quitarProc y insertProc ya que las tenemos
 		quitarProc(p, p->prio);
 		insertProc(p, prio);
+    p->prio = prio;
+    release(&ptable.lock);
+    
+	  return 1;
 	}
+  //si no lo es, voy recorriendo la cola hasta conseguirlo. guardo el anterior al que miro tambien
 	struct proc* anterior = prt->primero->sigprio;
 	struct proc* actual = prt->primero;
 
@@ -110,18 +115,18 @@ setNewPrio(struct proc* p, unsigned int prio){
 		anterior = actual;
 		actual = actual->sigprio;
 	}
-	
+	//si ya he encontrado el proceso hago que el anterior a este ahora apunte al siguiente de este
 	anterior->sigprio = actual->sigprio;
-	if(anterior->sigprio == NULL){
+	if(anterior->sigprio == NULL){ //si no apunta el ultimo a nada significa que es el nuevo ultimo
 		prt->ultimo = anterior->sigprio;
 	}
-	actual->sigprio = NULL;
+	actual->sigprio = NULL; //le quitamos al proceso que queremos al que apunta ba y le cambiamos la prio
 	actual->prio = prio;
-	insertProc(p, actual->prio);
+	insertProc(p, actual->prio); //le insertamos al final de la cola nueva
 	
-	release(&ptable.lock);
-	return 0;
-}
+	release(&ptable.lock); //liberamos cerrojo
+	return 1;
+} //sinceramente podria haber hecho el recorrido simplemente mirando hasta encontrar un proc->sigprio = p y cambiar ese
 
 void
 pinit(void)
@@ -191,7 +196,7 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
-  p->prio = 5;
+  p->prio = 5; //la prio por defecto es 5 asi que se la damos
   
 
   release(&ptable.lock);
@@ -257,7 +262,7 @@ userinit(void)
   // because the assignment might not be atomic.
   acquire(&ptable.lock);
   
-  p->state = RUNNABLE;
+  p->state = RUNNABLE; //hora de meterte en una cola de prioridad
   insertProc( p, p->prio);
   
 
@@ -309,7 +314,7 @@ fork(void)
   }
   np->sz = curproc->sz;
   np->parent = curproc;
-  np->prio = curproc->prio;
+  np->prio = curproc->prio; //su prio va a ser la de su padre
   *np->tf = *curproc->tf;
 
   // Clear %eax so that fork returns 0 in the child.
@@ -326,7 +331,7 @@ fork(void)
 
   acquire(&ptable.lock);
 
-  np->state = RUNNABLE;
+  np->state = RUNNABLE; //hora de meterte en una cola de prioridad
   insertProc( np, np->prio);
 
   release(&ptable.lock);
@@ -343,7 +348,7 @@ exit(int status)
   struct proc *curproc = myproc();
   struct proc *p;
   int fd;
-
+  curproc->status = status; //tu estatus es el que te paso por parametro
   if(curproc == initproc)
     panic("init exiting");
 
@@ -404,7 +409,7 @@ wait(int* status)
         // Found one.
         pid = p->pid;
         kfree(p->kstack);
-        *status = p->status;
+        *status = p->status; //FRAN: Tu estado es el de tu hijo.
         p->kstack = 0;
         freevm(p->pgdir, 0); // User zone deleted before
         p->pid = 0;
@@ -521,7 +526,7 @@ void
 yield(void)
 {
   acquire(&ptable.lock);  //DOC: yieldlock
-  myproc()->state = RUNNABLE;
+  myproc()->state = RUNNABLE; //hora de meterte en una cola de prioridad
   insertProc( myproc(), myproc()->prio);
   sched();
   release(&ptable.lock);
@@ -598,7 +603,7 @@ wakeup1(void *chan)
 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->state == SLEEPING && p->chan == chan){
-      p->state = RUNNABLE;
+      p->state = RUNNABLE; //hora de meterte en una cola de prioridad
       insertProc( p, p->prio);
     }
   }
