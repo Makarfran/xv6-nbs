@@ -121,10 +121,10 @@ sys_date(void)
 {
   struct rtcdate *ptr;
   
-  if(argptr(0, (void **) &ptr, sizeof(*ptr)) < 0)
+  if(argptr(0, (void **) &ptr, sizeof(*ptr)) < 0) //cogemos el puntero de rtcdate que nos pasa el usuario 
     return -1;
-  cmostime(ptr);
-  return 0;
+  cmostime(ptr); //aplicamos cmostime que guarda el tiempo y la fecha en este
+  return 0; //devolvemos 0 para mostrar que no ha habido error
 }
 
 int

@@ -409,7 +409,7 @@ wait(int* status)
         // Found one.
         pid = p->pid;
         kfree(p->kstack);
-        *status = p->status; //FRAN: Tu estado es el de tu hijo.
+        *status = p->status; //Tu estado es el de tu hijo.
         p->kstack = 0;
         freevm(p->pgdir, 0); // User zone deleted before
         p->pid = 0;
@@ -464,7 +464,6 @@ scheduler(void)
        
       p = pi->primero;
       if(p->state != RUNNABLE) continue;
-      
         
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
@@ -472,13 +471,8 @@ scheduler(void)
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
-      
-      
       quitarProc(p, p->prio);
-      
-      
-      
-
+  
       swtch(&(c->scheduler), p->context);
       switchkvm();
       
